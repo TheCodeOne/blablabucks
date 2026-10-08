@@ -11,11 +11,9 @@ import { type SharedState } from '@/lib/share'
 import { cn } from '@/lib/utils'
 
 // --- API Client (with local dev mock) ---
-let DEV_MOCK_STATE: SharedState | null = null
-
 async function createShareLink(state: SharedState): Promise<string> {
   if (import.meta.env.DEV) {
-    DEV_MOCK_STATE = state
+    localStorage.setItem('bbb_dev_mock', JSON.stringify(state))
     return 'dev-mock-id'
   }
   const res = await fetch('/api/share', {
@@ -28,8 +26,9 @@ async function createShareLink(state: SharedState): Promise<string> {
 }
 
 async function fetchSharedState(id: string): Promise<SharedState> {
-  if (import.meta.env.DEV && id === 'dev-mock-id' && DEV_MOCK_STATE) {
-    return DEV_MOCK_STATE
+  if (import.meta.env.DEV && id === 'dev-mock-id') {
+    const raw = localStorage.getItem('bbb_dev_mock')
+    if (raw) return JSON.parse(raw)
   }
   const res = await fetch(`/api/share/${id}`)
   if (!res.ok) throw new Error('Not found')
