@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'motion/react'
-import { CheckIcon, FlameIcon, PauseIcon, PlayIcon, RotateCcwIcon, ShareIcon, UsersIcon } from 'lucide-react'
-import { CATEGORIES } from '@/domain/categories'
+import { CheckIcon, FlameIcon, PauseIcon, PlayIcon, RotateCcwIcon, ShareIcon } from 'lucide-react'
 import { QuickSettings } from '@/components/quick-settings'
 import { SettingsModal } from '@/components/settings-modal'
 import { Taxameter } from '@/components/taxameter'
@@ -67,9 +66,6 @@ function ShareButton({ state }: { state: SharedState }) {
 }
 
 function ViewerApp({ state }: { state: SharedState }) {
-  const present = CATEGORIES.filter((c) => state.h[c.id] > 0)
-  const total = CATEGORIES.reduce((n, c) => n + state.h[c.id], 0)
-
   return (
     <div className="mx-auto flex min-h-dvh max-w-6xl flex-col px-5 py-6 sm:px-8">
       <header className="flex items-center justify-between">
@@ -99,20 +95,13 @@ function ViewerApp({ state }: { state: SharedState }) {
       </main>
 
       <footer className="pb-2">
-        <div className="overflow-hidden rounded-lg border border-border bg-card p-5 shadow-sm">
-          <h3 className="mb-4 flex items-center gap-2 text-sm font-medium">
-            <UsersIcon className="size-4 text-ember" />
-            {total} {total === 1 ? 'person' : 'people'} in meeting
-          </h3>
-          <ul className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
-            {present.map((c) => (
-              <li key={c.id} className="flex items-center justify-between rounded-md bg-accent/50 px-3 py-2 text-sm">
-                <span className="font-medium text-foreground">{c.label}</span>
-                <span className="font-mono text-ash">{state.h[c.id]}x</span>
-              </li>
-            ))}
-          </ul>
-        </div>
+        <QuickSettings
+          headcounts={state.h}
+          rates={state.r}
+          maxHeadcount={99}
+          onChange={() => {}}
+          readOnly
+        />
       </footer>
     </div>
   )

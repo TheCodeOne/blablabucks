@@ -116,7 +116,9 @@ function CategoryRow({
     >
       <div className="flex min-w-0 flex-col sm:flex-row sm:items-start sm:justify-between sm:gap-2">
         <span className="truncate text-sm leading-tight font-medium">{label}</span>
-        <span className="font-mono text-[0.65rem] whitespace-nowrap text-ash">{formatRate(rate)}/h</span>
+        {!readOnly && (
+          <span className="font-mono text-[0.65rem] whitespace-nowrap text-ash">{formatRate(rate)}/h</span>
+        )}
       </div>
 
       <div className={cn('flex shrink-0 items-center gap-1', !readOnly && 'sm:justify-between sm:gap-0', readOnly && 'justify-end')}>
