@@ -1,4 +1,5 @@
 export const CATEGORY_IDS = [
+  'manager',
   'internalDev',
   'externalDev',
   'nearshoringDev',
@@ -17,6 +18,7 @@ export type Category = {
 
 /** Rates are hourly costs in EUR. Defaults are rough DACH market guesses; users override them in the Settings Modal. */
 export const CATEGORIES: readonly Category[] = [
+  { id: 'manager', label: 'Manager', shortLabel: 'Manager', defaultRate: 100 },
   { id: 'internalDev', label: 'Internal Dev', shortLabel: 'Int. Dev', defaultRate: 75 },
   { id: 'externalDev', label: 'External Dev', shortLabel: 'Ext. Dev', defaultRate: 110 },
   { id: 'nearshoringDev', label: 'NearShoring Dev', shortLabel: 'Nearshore', defaultRate: 50 },
