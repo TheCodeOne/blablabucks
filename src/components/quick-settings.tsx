@@ -1,6 +1,15 @@
 import { useId, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { ChevronUpIcon, MinusIcon, PlusIcon, UsersIcon, Trash2Icon } from 'lucide-react'
+import {
+  ChevronUpIcon,
+  MinusIcon,
+  PlusIcon,
+  UsersIcon,
+  Trash2Icon,
+  BriefcaseIcon,
+  CodeIcon,
+  UserIcon,
+} from 'lucide-react'
 import { CATEGORIES, type CategoryId, type Headcounts, type Rates } from '@/domain/categories'
 import { type TeamPreset } from '@/domain/teams'
 import { formatRate } from '@/lib/format'
@@ -17,6 +26,15 @@ type Props = {
   onLoadTeam?: (headcounts: Headcounts) => void
   onSaveTeam?: (name: string) => void
   onDeleteTeam?: (id: string) => void
+}
+
+const CATEGORY_ICONS: Record<CategoryId, React.ElementType> = {
+  manager: BriefcaseIcon,
+  internalDev: CodeIcon,
+  externalDev: CodeIcon,
+  nearshoringDev: CodeIcon,
+  internalNonDev: UserIcon,
+  externalNonDev: UserIcon,
 }
 
 /** Open by default on wide screens, collapsed on phones; the user's choice is remembered. */
@@ -104,6 +122,7 @@ export function QuickSettings({ headcounts, rates, maxHeadcount, onChange, readO
               {CATEGORIES.map((c) => (
                 <CategoryRow
                   key={c.id}
+                  icon={CATEGORY_ICONS[c.id]}
                   label={c.label}
                   rate={rates[c.id]}
                   count={headcounts[c.id]}
@@ -122,6 +141,7 @@ export function QuickSettings({ headcounts, rates, maxHeadcount, onChange, readO
 
 /** Compact row on phones, stacked tile from `sm` up. */
 function CategoryRow({
+  icon: Icon,
   label,
   rate,
   count,
@@ -129,6 +149,7 @@ function CategoryRow({
   onChange,
   readOnly,
 }: {
+  icon: React.ElementType
   label: string
   rate: number
   count: number
@@ -145,7 +166,10 @@ function CategoryRow({
       )}
     >
       <div className="flex min-w-0 flex-col sm:flex-row sm:items-start sm:justify-between sm:gap-2">
-        <span className="truncate text-sm leading-tight font-medium">{label}</span>
+        <div className="flex items-center gap-2 truncate">
+          <Icon className={cn("size-4 shrink-0", active ? "text-ember" : "text-ash/50")} />
+          <span className="truncate text-sm leading-tight font-medium">{label}</span>
+        </div>
         {!readOnly && (
           <span className="font-mono text-[0.65rem] whitespace-nowrap text-ash">{formatRate(rate)}/h</span>
         )}
