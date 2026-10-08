@@ -207,6 +207,10 @@ function HostApp() {
           rates={m.rates}
           maxHeadcount={m.maxHeadcount}
           onChange={m.changeHeadcount}
+          teams={m.teams}
+          onLoadTeam={m.loadTeam}
+          onSaveTeam={m.saveTeam}
+          onDeleteTeam={m.deleteTeam}
         />
       </footer>
     </div>

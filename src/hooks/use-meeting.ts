@@ -15,6 +15,7 @@ import {
   start as startSession,
   type Session,
 } from '@/domain/session'
+import { type TeamPreset } from '@/domain/teams'
 import { usePersistentState } from '@/lib/use-persistent-state'
 
 const MAX_HEADCOUNT = 99
@@ -46,6 +47,24 @@ function sanitizeSession(raw: unknown): Session {
   return s as Session
 }
 
+function sanitizeTeams(raw: unknown): TeamPreset[] {
+  if (!Array.isArray(raw)) return []
+  return raw
+    .map((t) => {
+      if (!t || typeof t !== 'object') return null
+      return {
+        id: String((t as Record<string, unknown>).id || crypto.randomUUID()),
+        name: String((t as Record<string, unknown>).name || 'Unnamed Team'),
+        headcounts: sanitizeRecord(
+          (t as Record<string, unknown>).headcounts,
+          EMPTY_HEADCOUNTS,
+          clampHeadcount,
+        ),
+      }
+    })
+    .filter(Boolean) as TeamPreset[]
+}
+
 /** All meeting state, persisted to localStorage so a reload or tab switch loses nothing. */
 export function useMeeting() {
   const [rates, setRatesRaw] = usePersistentState<Rates>('bbb.rates.v1', DEFAULT_RATES, (r) =>
@@ -65,6 +84,11 @@ export function useMeeting() {
     'bbb.elapsedMinutes.v1',
     0,
     (r) => (isNum(r) ? Math.max(0, Math.round(r)) : 0),
+  )
+  const [teams, setTeams] = usePersistentState<TeamPreset[]>(
+    'bbb.teams.v1',
+    [],
+    sanitizeTeams,
   )
 
   const currentBurnRate = burnRatePerHour(headcounts, rates)
@@ -93,6 +117,29 @@ export function useMeeting() {
     [headcounts, setRatesRaw, applyRate],
   )
 
+  const loadTeam = useCallback(
+    (teamHeadcounts: Headcounts) => {
+      const clean = sanitizeRecord(teamHeadcounts, EMPTY_HEADCOUNTS, clampHeadcount)
+      setHeadcountsRaw(clean)
+      applyRate(burnRatePerHour(clean, rates))
+    },
+    [rates, setHeadcountsRaw, applyRate],
+  )
+
+  const saveTeam = useCallback(
+    (name: string) => {
+      setTeams((t) => [...t, { id: crypto.randomUUID(), name, headcounts }])
+    },
+    [headcounts, setTeams],
+  )
+
+  const deleteTeam = useCallback(
+    (id: string) => {
+      setTeams((t) => t.filter((team) => team.id !== id))
+    },
+    [setTeams],
+  )
+
   const start = useCallback(
     () => setSession((s) => startSession(s, Date.now(), currentBurnRate, elapsedMinutes)),
     [setSession, currentBurnRate, elapsedMinutes],
@@ -108,6 +155,10 @@ export function useMeeting() {
     setRates,
     headcounts,
     changeHeadcount,
+    teams,
+    loadTeam,
+    saveTeam,
+    deleteTeam,
     session,
     currentBurnRate,
     elapsedMinutes,
@@ -118,3 +169,4 @@ export function useMeeting() {
     maxHeadcount: MAX_HEADCOUNT,
   }
 }
+
