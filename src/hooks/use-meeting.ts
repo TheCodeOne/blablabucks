@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react'
+import { useCallback } from 'react'
 import {
   CATEGORY_IDS,
   DEFAULT_RATES,
@@ -15,7 +15,6 @@ import {
   start as startSession,
   type Session,
 } from '@/domain/session'
-import { decodeSharedState, encodeSharedState } from '@/lib/share'
 import { usePersistentState } from '@/lib/use-persistent-state'
 
 const MAX_HEADCOUNT = 99
@@ -49,32 +48,23 @@ function sanitizeSession(raw: unknown): Session {
 
 /** All meeting state, persisted to localStorage so a reload or tab switch loses nothing. */
 export function useMeeting() {
-  const sharedState = useMemo(() => decodeSharedState(window.location.hash), [])
-  const isViewer = !!sharedState
-
-  const [rates, setRatesRaw] = usePersistentState<Rates>(
-    'bbb.rates.v1',
-    DEFAULT_RATES,
-    (r) => sanitizeRecord(r, DEFAULT_RATES, clampRate),
-    { override: sharedState?.r, readOnly: isViewer }
+  const [rates, setRatesRaw] = usePersistentState<Rates>('bbb.rates.v1', DEFAULT_RATES, (r) =>
+    sanitizeRecord(r, DEFAULT_RATES, clampRate),
   )
   const [headcounts, setHeadcountsRaw] = usePersistentState<Headcounts>(
     'bbb.headcounts.v1',
     EMPTY_HEADCOUNTS,
     (r) => sanitizeRecord(r, EMPTY_HEADCOUNTS, clampHeadcount),
-    { override: sharedState?.h, readOnly: isViewer }
   )
   const [session, setSession] = usePersistentState<Session>(
     'bbb.session.v1',
     IDLE_SESSION,
     sanitizeSession,
-    { override: sharedState?.s, readOnly: isViewer }
   )
   const [elapsedMinutes, setElapsedMinutes] = usePersistentState<number>(
     'bbb.elapsedMinutes.v1',
     0,
     (r) => (isNum(r) ? Math.max(0, Math.round(r)) : 0),
-    { readOnly: isViewer }
   )
 
   const currentBurnRate = burnRatePerHour(headcounts, rates)
@@ -113,11 +103,6 @@ export function useMeeting() {
     setElapsedMinutes(0)
   }, [setSession, setElapsedMinutes])
 
-  const shareHash = useMemo(
-    () => encodeSharedState({ r: rates, h: headcounts, s: session }),
-    [rates, headcounts, session]
-  )
-
   return {
     rates,
     setRates,
@@ -131,7 +116,5 @@ export function useMeeting() {
     pause,
     reset,
     maxHeadcount: MAX_HEADCOUNT,
-    isViewer,
-    shareHash,
   }
 }
