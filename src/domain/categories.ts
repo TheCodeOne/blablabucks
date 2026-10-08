@@ -19,11 +19,11 @@ export type Category = {
 /** Rates are hourly costs in EUR. Defaults are rough DACH market guesses; users override them in the Settings Modal. */
 export const CATEGORIES: readonly Category[] = [
   { id: 'manager', label: 'Manager', shortLabel: 'Manager', defaultRate: 120 },
-  { id: 'internalDev', label: 'Internal Dev', shortLabel: 'Int. Dev', defaultRate: 85 },
-  { id: 'externalDev', label: 'External Dev', shortLabel: 'Ext. Dev', defaultRate: 120 },
-  { id: 'nearshoringDev', label: 'NearShoring Dev', shortLabel: 'Nearshore', defaultRate: 45 },
-  { id: 'internalNonDev', label: 'Internal Non-Dev', shortLabel: 'Int. Non-Dev', defaultRate: 75 },
-  { id: 'externalNonDev', label: 'External Non-Dev', shortLabel: 'Ext. Non-Dev', defaultRate: 120 },
+  { id: 'internalDev', label: 'Int. Dev', shortLabel: 'Int. Dev', defaultRate: 85 },
+  { id: 'externalDev', label: 'Ext. Dev', shortLabel: 'Ext. Dev', defaultRate: 120 },
+  { id: 'nearshoringDev', label: 'Nearshore', shortLabel: 'Nearshore', defaultRate: 45 },
+  { id: 'internalNonDev', label: 'Int. Non-Dev', shortLabel: 'Int. Non-Dev', defaultRate: 75 },
+  { id: 'externalNonDev', label: 'Ext. Non-Dev', shortLabel: 'Ext. Non-Dev', defaultRate: 120 },
 ]
 
 export type Rates = Record<CategoryId, number>
