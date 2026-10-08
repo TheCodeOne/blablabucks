@@ -9,16 +9,32 @@ import {
   BriefcaseIcon,
   CodeIcon,
   UserIcon,
+  GlobeIcon,
+  LaptopIcon,
 } from 'lucide-react'
-import { CATEGORIES, type CategoryId, type Headcounts, type Rates } from '@/domain/categories'
+import {
+  type Category,
+  type CategoryId,
+  type Headcounts,
+  type CategoryIcon,
+} from '@/domain/categories'
 import { type TeamPreset } from '@/domain/teams'
 import { formatRate } from '@/lib/format'
 import { usePersistentState } from '@/lib/use-persistent-state'
 import { cn } from '@/lib/utils'
 
+export const CATEGORY_ICONS: Record<CategoryIcon, React.ElementType> = {
+  briefcase: BriefcaseIcon,
+  code: CodeIcon,
+  user: UserIcon,
+  users: UsersIcon,
+  globe: GlobeIcon,
+  laptop: LaptopIcon,
+}
+
 type Props = {
   headcounts: Headcounts
-  rates: Rates
+  categories: Category[]
   maxHeadcount: number
   onChange: (id: CategoryId, delta: number) => void
   readOnly?: boolean
@@ -26,15 +42,6 @@ type Props = {
   onLoadTeam?: (headcounts: Headcounts) => void
   onSaveTeam?: (name: string) => void
   onDeleteTeam?: (id: string) => void
-}
-
-const CATEGORY_ICONS: Record<CategoryId, React.ElementType> = {
-  manager: BriefcaseIcon,
-  internalDev: CodeIcon,
-  externalDev: CodeIcon,
-  nearshoringDev: CodeIcon,
-  internalNonDev: UserIcon,
-  externalNonDev: UserIcon,
 }
 
 /** Open by default on wide screens, collapsed on phones; the user's choice is remembered. */
@@ -47,7 +54,7 @@ const defaultOpen = () =>
  */
 export function QuickSettings({
   headcounts,
-  rates,
+  categories,
   maxHeadcount,
   onChange,
   readOnly,
@@ -62,8 +69,8 @@ export function QuickSettings({
     (r) => (typeof r === 'boolean' ? r : defaultOpen()),
   )
   const panelId = useId()
-  const total = CATEGORIES.reduce((n, c) => n + headcounts[c.id], 0)
-  const present = CATEGORIES.filter((c) => headcounts[c.id] > 0)
+  const total = categories.reduce((n, c) => n + (headcounts[c.id] || 0), 0)
+  const present = categories.filter((c) => (headcounts[c.id] || 0) > 0)
 
   return (
     <section className="overflow-hidden border border-border bg-card">
@@ -81,7 +88,7 @@ export function QuickSettings({
         <span className="min-w-0 flex-1 truncate font-mono text-xs text-ash">
           {present.length === 0
             ? 'Nobody here yet'
-            : present.map((c) => `${headcounts[c.id]} ${c.shortLabel}`).join(' · ')}
+            : present.map((c) => `${headcounts[c.id]} ${c.label}`).join(' · ')}
         </span>
         <motion.span
           animate={{ rotate: open ? 0 : 180 }}
@@ -136,13 +143,13 @@ export function QuickSettings({
               </div>
             )}
             <ul className="grid grid-cols-1 gap-px border-t border-border bg-border sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
-              {CATEGORIES.map((c) => (
+              {categories.map((c) => (
                 <CategoryRow
                   key={c.id}
-                  icon={CATEGORY_ICONS[c.id]}
+                  icon={CATEGORY_ICONS[c.icon] || UserIcon}
                   label={c.label}
-                  rate={rates[c.id]}
-                  count={headcounts[c.id]}
+                  rate={c.rate}
+                  count={headcounts[c.id] || 0}
                   max={maxHeadcount}
                   onChange={(delta) => onChange(c.id, delta)}
                   readOnly={readOnly}

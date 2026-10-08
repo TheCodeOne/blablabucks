@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { EMPTY_HEADCOUNTS, DEFAULT_RATES } from './categories'
+import { DEFAULT_CATEGORIES } from './categories'
 import { IDLE_SESSION, burnRatePerHour, costAt, elapsedMsAt, pause, rebase, start } from './session'
 
 const MIN = 60_000
@@ -7,8 +7,9 @@ const HOUR = 60 * MIN
 
 describe('burnRatePerHour', () => {
   it('sums headcount × rate over all categories', () => {
-    const headcounts = { ...EMPTY_HEADCOUNTS, internalDev: 2, externalNonDev: 1 }
-    expect(burnRatePerHour(headcounts, DEFAULT_RATES)).toBe(2 * 75 + 120)
+    const headcounts = { manager: 2, dev: 1 }
+    // DEFAULT_CATEGORIES: manager = 120, dev = 85
+    expect(burnRatePerHour(headcounts, DEFAULT_CATEGORIES)).toBe(2 * 120 + 1 * 85)
   })
 })
 

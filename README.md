@@ -6,10 +6,10 @@ A live **Taxameter** for meetings: shows exactly how much money the current meet
 
 ## Features
 
-- **Six Roles:** (Manager, Int. Dev, Ext. Dev, Nearshore, Int. Non-Dev, Ext. Non-Dev) with customizable hourly rates.
+- **Dynamic Roles:** Create, edit, and delete custom roles (e.g., Manager, Dev, PO) with customizable hourly rates and icons.
 - **Dynamic Adjustments:** Quick Settings panel with `+`/`-` to change the headcount live. The burn rate adjusts from that exact second onwards.
 - **Team Presets:** Save frequent attendee combinations (e.g. "Daily Standup", "Management Sync") to load them with one click.
-- **Live Share Links:** Generate a funny, memorable link (e.g., `toxic-deepdive-blocked`) to share a read-only Viewer Mode with meeting participants. Uses Cloudflare KV for sync.
+- **Live Share Links:** Generate a funny, memorable link (e.g., `delayed-agile-checkin`) to share a read-only Viewer Mode with meeting participants. Uses Cloudflare KV for sync.
 - **Time Travel:** Back-fill elapsed minutes if you forgot to start the app at the beginning of the meeting.
 - **Bulletproof State:** Survives tab switches, throttled background tabs, and browser reloads. The cost is calculated deterministically from absolute timestamps and persisted in `localStorage`.
 

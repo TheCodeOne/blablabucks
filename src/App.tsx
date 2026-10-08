@@ -27,7 +27,31 @@ async function createShareLink(state: SharedState): Promise<string> {
 async function fetchSharedState(id: string): Promise<SharedState> {
   if (import.meta.env.DEV && id === 'dev-mock-id') {
     const raw = localStorage.getItem('bbb_dev_mock')
-    if (raw) return JSON.parse(raw)
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw)
+        // If it's an old state (missing categories), generate a mock one
+        if (!parsed.c) throw new Error('Old state')
+        return parsed
+      } catch {
+        // Fallback to a valid mock state if empty or invalid
+      }
+    }
+    // Dummy state fallback for dev
+    return {
+      c: [
+        { id: 'manager', label: 'Manager', icon: 'briefcase', rate: 120 },
+        { id: 'dev', label: 'Dev', icon: 'code', rate: 85 },
+      ],
+      h: { manager: 1, dev: 2 },
+      s: {
+        status: 'running',
+        accumulatedCost: 0,
+        accumulatedMs: 0,
+        lastChangeTimestamp: Date.now(),
+        burnRatePerHour: 290,
+      },
+    }
   }
   const res = await fetch(`/api/share/${id}`)
   if (!res.ok) throw new Error('Not found')
@@ -101,7 +125,7 @@ function ViewerApp({ state }: { state: SharedState }) {
       <footer className="pb-2">
         <QuickSettings
           headcounts={state.h}
-          rates={state.r}
+          categories={state.c}
           maxHeadcount={99}
           onChange={() => {}}
           readOnly
@@ -117,7 +141,7 @@ function HostApp() {
   const running = status === 'running'
   const idle = status === 'idle'
   const nobody = m.currentBurnRate === 0
-  const currentState: SharedState = { r: m.rates, h: m.headcounts, s: m.session }
+  const currentState: SharedState = { c: m.categories, h: m.headcounts, s: m.session }
 
   return (
     <div className="mx-auto flex min-h-dvh max-w-6xl flex-col px-5 py-6 sm:px-8">
@@ -130,7 +154,7 @@ function HostApp() {
         </div>
         <div className="flex items-center gap-2">
           <ShareButton state={currentState} />
-          <SettingsModal rates={m.rates} onSave={m.setRates} />
+          <SettingsModal categories={m.categories} onSave={m.setCategories} />
         </div>
       </header>
 
@@ -216,7 +240,7 @@ function HostApp() {
       <footer className="pb-2">
         <QuickSettings
           headcounts={m.headcounts}
-          rates={m.rates}
+          categories={m.categories}
           maxHeadcount={m.maxHeadcount}
           onChange={m.changeHeadcount}
           teams={m.teams}

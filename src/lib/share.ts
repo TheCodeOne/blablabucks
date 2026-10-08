@@ -1,8 +1,8 @@
-import type { Rates, Headcounts } from '@/domain/categories'
+import type { Category, Headcounts } from '@/domain/categories'
 import type { Session } from '@/domain/session'
 
 export type SharedState = {
-  r: Rates
+  c: Category[]
   h: Headcounts
   s: Session
 }

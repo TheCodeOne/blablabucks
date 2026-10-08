@@ -1,4 +1,4 @@
-import { CATEGORY_IDS, type Headcounts, type Rates } from './categories'
+import { type Category, type Headcounts } from './categories'
 
 const MS_PER_HOUR = 3_600_000
 
@@ -26,8 +26,8 @@ export const IDLE_SESSION: Session = {
   burnRatePerHour: 0,
 }
 
-export function burnRatePerHour(headcounts: Headcounts, rates: Rates): number {
-  return CATEGORY_IDS.reduce((sum, id) => sum + headcounts[id] * rates[id], 0)
+export function burnRatePerHour(headcounts: Headcounts, categories: Category[]): number {
+  return categories.reduce((sum, c) => sum + (headcounts[c.id] || 0) * c.rate, 0)
 }
 
 function sinceLastChange(session: Session, now: number): number {

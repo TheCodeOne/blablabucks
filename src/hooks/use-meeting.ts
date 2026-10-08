@@ -1,11 +1,10 @@
 import { useCallback } from 'react'
 import {
-  CATEGORY_IDS,
-  DEFAULT_RATES,
-  EMPTY_HEADCOUNTS,
+  DEFAULT_CATEGORIES,
+  type Category,
   type CategoryId,
   type Headcounts,
-  type Rates,
+  type CategoryIcon,
 } from '@/domain/categories'
 import {
   IDLE_SESSION,
@@ -22,19 +21,37 @@ const MAX_HEADCOUNT = 99
 
 const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v)
 
-function sanitizeRecord(
-  raw: unknown,
-  fallback: Record<CategoryId, number>,
-  clamp: (n: number) => number,
-) {
-  const src = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>
-  return Object.fromEntries(
-    CATEGORY_IDS.map((id) => [id, isNum(src[id]) ? clamp(src[id]) : fallback[id]]),
-  ) as Record<CategoryId, number>
-}
-
 const clampRate = (n: number) => Math.max(0, n)
 const clampHeadcount = (n: number) => Math.min(MAX_HEADCOUNT, Math.max(0, Math.round(n)))
+
+function sanitizeCategories(raw: unknown): Category[] {
+  if (!Array.isArray(raw)) return DEFAULT_CATEGORIES
+  const clean = raw
+    .map((c) => {
+      if (!c || typeof c !== 'object') return null
+      return {
+        id: String((c as Record<string, unknown>).id || crypto.randomUUID()),
+        label: String((c as Record<string, unknown>).label || 'Unnamed'),
+        icon: String((c as Record<string, unknown>).icon || 'user') as CategoryIcon,
+        rate: isNum((c as Record<string, unknown>).rate)
+          ? clampRate((c as Record<string, unknown>).rate as number)
+          : 0,
+      }
+    })
+    .filter(Boolean) as Category[]
+  return clean.length > 0 ? clean : DEFAULT_CATEGORIES
+}
+
+function sanitizeHeadcounts(raw: unknown): Headcounts {
+  if (!raw || typeof raw !== 'object') return {}
+  const clean: Headcounts = {}
+  for (const [k, v] of Object.entries(raw)) {
+    if (isNum(v)) {
+      clean[k] = clampHeadcount(v)
+    }
+  }
+  return clean
+}
 
 function sanitizeSession(raw: unknown): Session {
   const s = raw as Partial<Session> | null
@@ -59,11 +76,7 @@ function sanitizeTeams(raw: unknown): TeamPreset[] {
       return {
         id: String((t as Record<string, unknown>).id || crypto.randomUUID()),
         name: String((t as Record<string, unknown>).name || 'Unnamed Team'),
-        headcounts: sanitizeRecord(
-          (t as Record<string, unknown>).headcounts,
-          EMPTY_HEADCOUNTS,
-          clampHeadcount,
-        ),
+        headcounts: sanitizeHeadcounts((t as Record<string, unknown>).headcounts),
       }
     })
     .filter(Boolean) as TeamPreset[]
@@ -71,27 +84,29 @@ function sanitizeTeams(raw: unknown): TeamPreset[] {
 
 /** All meeting state, persisted to localStorage so a reload or tab switch loses nothing. */
 export function useMeeting() {
-  const [rates, setRatesRaw] = usePersistentState<Rates>('bbb.rates.v1', DEFAULT_RATES, (r) =>
-    sanitizeRecord(r, DEFAULT_RATES, clampRate),
+  const [categories, setCategoriesRaw] = usePersistentState<Category[]>(
+    'bbb.categories.v2',
+    DEFAULT_CATEGORIES,
+    sanitizeCategories,
   )
   const [headcounts, setHeadcountsRaw] = usePersistentState<Headcounts>(
-    'bbb.headcounts.v1',
-    EMPTY_HEADCOUNTS,
-    (r) => sanitizeRecord(r, EMPTY_HEADCOUNTS, clampHeadcount),
+    'bbb.headcounts.v2',
+    {},
+    sanitizeHeadcounts,
   )
   const [session, setSession] = usePersistentState<Session>(
-    'bbb.session.v1',
+    'bbb.session.v2',
     IDLE_SESSION,
     sanitizeSession,
   )
   const [elapsedMinutes, setElapsedMinutes] = usePersistentState<number>(
-    'bbb.elapsedMinutes.v1',
+    'bbb.elapsedMinutes.v2',
     0,
     (r) => (isNum(r) ? Math.max(0, Math.round(r)) : 0),
   )
-  const [teams, setTeams] = usePersistentState<TeamPreset[]>('bbb.teams.v1', [], sanitizeTeams)
+  const [teams, setTeams] = usePersistentState<TeamPreset[]>('bbb.teams.v2', [], sanitizeTeams)
 
-  const currentBurnRate = burnRatePerHour(headcounts, rates)
+  const currentBurnRate = burnRatePerHour(headcounts, categories)
 
   /** Any change to the Burn Rate is checkpointed into the Session so it only applies from now on. */
   const applyRate = useCallback(
@@ -101,36 +116,44 @@ export function useMeeting() {
 
   const changeHeadcount = useCallback(
     (id: CategoryId, delta: number) => {
-      const next = { ...headcounts, [id]: clampHeadcount(headcounts[id] + delta) }
+      const current = headcounts[id] || 0
+      const next = { ...headcounts, [id]: clampHeadcount(current + delta) }
       setHeadcountsRaw(next)
-      applyRate(burnRatePerHour(next, rates))
+      applyRate(burnRatePerHour(next, categories))
     },
-    [headcounts, rates, setHeadcountsRaw, applyRate],
+    [headcounts, categories, setHeadcountsRaw, applyRate],
   )
 
-  const setRates = useCallback(
-    (next: Rates) => {
-      const clean = sanitizeRecord(next, DEFAULT_RATES, clampRate)
-      setRatesRaw(clean)
+  const setCategories = useCallback(
+    (next: Category[]) => {
+      const clean = sanitizeCategories(next)
+      setCategoriesRaw(clean)
       applyRate(burnRatePerHour(headcounts, clean))
     },
-    [headcounts, setRatesRaw, applyRate],
+    [headcounts, setCategoriesRaw, applyRate],
   )
 
   const loadTeam = useCallback(
     (teamHeadcounts: Headcounts) => {
-      const clean = sanitizeRecord(teamHeadcounts, EMPTY_HEADCOUNTS, clampHeadcount)
+      const clean = sanitizeHeadcounts(teamHeadcounts)
       setHeadcountsRaw(clean)
-      applyRate(burnRatePerHour(clean, rates))
+      applyRate(burnRatePerHour(clean, categories))
     },
-    [rates, setHeadcountsRaw, applyRate],
+    [categories, setHeadcountsRaw, applyRate],
   )
 
   const saveTeam = useCallback(
     (name: string) => {
-      setTeams((t) => [...t, { id: crypto.randomUUID(), name, headcounts }])
+      // Only save headcounts for currently existing categories, omit zeros
+      const activeHeadcounts: Headcounts = {}
+      for (const cat of categories) {
+        if (headcounts[cat.id]) {
+          activeHeadcounts[cat.id] = headcounts[cat.id]
+        }
+      }
+      setTeams((t) => [...t, { id: crypto.randomUUID(), name, headcounts: activeHeadcounts }])
     },
-    [headcounts, setTeams],
+    [categories, headcounts, setTeams],
   )
 
   const deleteTeam = useCallback(
@@ -151,8 +174,8 @@ export function useMeeting() {
   }, [setSession, setElapsedMinutes])
 
   return {
-    rates,
-    setRates,
+    categories,
+    setCategories,
     headcounts,
     changeHeadcount,
     teams,
