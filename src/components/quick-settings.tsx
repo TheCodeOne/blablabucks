@@ -11,6 +11,7 @@ type Props = {
   rates: Rates
   maxHeadcount: number
   onChange: (id: CategoryId, delta: number) => void
+  readOnly?: boolean
 }
 
 /** Open by default on wide screens, collapsed on phones; the user's choice is remembered. */
@@ -21,7 +22,7 @@ const defaultOpen = () =>
  * Headcount per Category with +/- controls. Live: changes apply to a running meeting immediately.
  * Collapsible; the collapsed bar summarizes who's in the room.
  */
-export function QuickSettings({ headcounts, rates, maxHeadcount, onChange }: Props) {
+export function QuickSettings({ headcounts, rates, maxHeadcount, onChange, readOnly }: Props) {
   const [open, setOpen] = usePersistentState<boolean>(
     'bbb.quickSettingsOpen.v1',
     defaultOpen(),
@@ -78,6 +79,7 @@ export function QuickSettings({ headcounts, rates, maxHeadcount, onChange }: Pro
                   count={headcounts[c.id]}
                   max={maxHeadcount}
                   onChange={(delta) => onChange(c.id, delta)}
+                  readOnly={readOnly}
                 />
               ))}
             </ul>
@@ -95,12 +97,14 @@ function CategoryRow({
   count,
   max,
   onChange,
+  readOnly,
 }: {
   label: string
   rate: number
   count: number
   max: number
   onChange: (delta: number) => void
+  readOnly?: boolean
 }) {
   const active = count > 0
   return (
@@ -115,10 +119,12 @@ function CategoryRow({
         <span className="font-mono text-[0.65rem] whitespace-nowrap text-ash">{formatRate(rate)}/h</span>
       </div>
 
-      <div className="flex shrink-0 items-center gap-1 sm:justify-between sm:gap-0">
-        <StepButton label={`Remove one ${label}`} disabled={count === 0} onClick={() => onChange(-1)}>
-          <MinusIcon />
-        </StepButton>
+      <div className={cn('flex shrink-0 items-center gap-1', !readOnly && 'sm:justify-between sm:gap-0', readOnly && 'justify-end')}>
+        {!readOnly && (
+          <StepButton label={`Remove one ${label}`} disabled={count === 0} onClick={() => onChange(-1)}>
+            <MinusIcon />
+          </StepButton>
+        )}
 
         <div className="relative h-8 w-10 overflow-hidden text-center sm:h-10 sm:w-12">
           <AnimatePresence mode="popLayout" initial={false}>
@@ -139,9 +145,11 @@ function CategoryRow({
           </AnimatePresence>
         </div>
 
-        <StepButton label={`Add one ${label}`} disabled={count >= max} onClick={() => onChange(1)}>
-          <PlusIcon />
-        </StepButton>
+        {!readOnly && (
+          <StepButton label={`Add one ${label}`} disabled={count >= max} onClick={() => onChange(1)}>
+            <PlusIcon />
+          </StepButton>
+        )}
       </div>
     </li>
   )

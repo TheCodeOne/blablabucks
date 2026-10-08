@@ -8,8 +8,11 @@ export function usePersistentState<T>(
   key: string,
   fallback: T,
   sanitize: (raw: unknown) => T = (raw) => raw as T,
+  options?: { override?: T; readOnly?: boolean },
 ) {
   const [value, setValue] = useState<T>(() => {
+    if (options?.override !== undefined) return options.override
+
     try {
       const raw = localStorage.getItem(key)
       return raw === null ? fallback : sanitize(JSON.parse(raw))
@@ -22,15 +25,17 @@ export function usePersistentState<T>(
     (next: T | ((prev: T) => T)) => {
       setValue((prev) => {
         const resolved = typeof next === 'function' ? (next as (p: T) => T)(prev) : next
-        try {
-          localStorage.setItem(key, JSON.stringify(resolved))
-        } catch {
-          // Storage full or disabled: keep working in-memory.
+        if (!options?.readOnly) {
+          try {
+            localStorage.setItem(key, JSON.stringify(resolved))
+          } catch {
+            // Storage full or disabled: keep working in-memory.
+          }
         }
         return resolved
       })
     },
-    [key],
+    [key, options?.readOnly],
   )
 
   return [value, set] as const
