@@ -70,7 +70,7 @@ export function QuickSettings({ headcounts, rates, maxHeadcount, onChange, readO
             transition={{ type: 'spring', stiffness: 380, damping: 36, opacity: { duration: 0.15 } }}
             className="overflow-hidden"
           >
-            <ul className="grid grid-cols-1 gap-px border-t border-border bg-border sm:grid-cols-5">
+            <ul className="grid grid-cols-1 gap-px border-t border-border bg-border sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
               {CATEGORIES.map((c) => (
                 <CategoryRow
                   key={c.id}
