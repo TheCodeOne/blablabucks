@@ -59,7 +59,11 @@ function ShareButton({ state }: { state: SharedState }) {
       disabled={status === 'loading'}
       className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium text-ash transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
     >
-      {status === 'copied' ? <CheckIcon className="size-4 text-emerald-500" /> : <ShareIcon className="size-4" />}
+      {status === 'copied' ? (
+        <CheckIcon className="size-4 text-emerald-500" />
+      ) : (
+        <ShareIcon className="size-4" />
+      )}
       {status === 'loading' ? 'Generating...' : status === 'copied' ? 'Copied' : 'Share link'}
     </button>
   )
@@ -149,7 +153,11 @@ function HostApp() {
                   : 'bg-ember text-primary-foreground shadow-[0_0_60px_-10px_var(--ember)] hover:bg-ember/90',
               )}
             >
-              {running ? <PauseIcon className="size-5" /> : <PlayIcon className="size-5 fill-current" />}
+              {running ? (
+                <PauseIcon className="size-5" />
+              ) : (
+                <PlayIcon className="size-5 fill-current" />
+              )}
               {running ? 'Pause' : idle ? 'Start burning' : 'Resume'}
             </motion.button>
 
@@ -187,7 +195,9 @@ function HostApp() {
                     inputMode="numeric"
                     value={m.elapsedMinutes || ''}
                     placeholder="0"
-                    onChange={(e) => m.setElapsedMinutes(Math.max(0, Math.round(Number(e.target.value) || 0)))}
+                    onChange={(e) =>
+                      m.setElapsedMinutes(Math.max(0, Math.round(Number(e.target.value) || 0)))
+                    }
                     className="h-8 w-14 rounded-lg border border-input bg-input/30 px-2 text-right text-foreground tabular-nums focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
                   />
                   min in
@@ -196,7 +206,9 @@ function HostApp() {
             )}
           </div>
           {nobody && idle && (
-            <p className="text-sm text-ash">Add some people in the panel below to start burning money.</p>
+            <p className="text-sm text-ash">
+              Add some people in the panel below to start burning money.
+            </p>
           )}
         </div>
       </main>

@@ -50,12 +50,18 @@ export function Taxameter({ session }: { session: Session }) {
       <div className="flex items-center gap-3 font-mono text-xs tracking-[0.3em] text-ash uppercase">
         <motion.span
           className="inline-block size-2 rounded-full bg-ember"
-          animate={running ? { opacity: [1, 0.25, 1], scale: [1, 0.8, 1] } : { opacity: 0.3, scale: 1 }}
-          transition={running ? { duration: 1.4, repeat: Infinity, ease: 'easeInOut' } : { duration: 0.3 }}
+          animate={
+            running ? { opacity: [1, 0.25, 1], scale: [1, 0.8, 1] } : { opacity: 0.3, scale: 1 }
+          }
+          transition={
+            running ? { duration: 1.4, repeat: Infinity, ease: 'easeInOut' } : { duration: 0.3 }
+          }
         />
         <span>{running ? 'Burning' : session.status === 'paused' ? 'Paused' : 'Ready'}</span>
         <span className="text-border">/</span>
-        <span ref={timeRef} className="tabular-nums">00:00:00</span>
+        <span ref={timeRef} className="tabular-nums">
+          00:00:00
+        </span>
       </div>
 
       <motion.div
@@ -70,8 +76,12 @@ export function Taxameter({ session }: { session: Session }) {
         role="timer"
         aria-live="off"
       >
-        <span ref={mainRef} className="text-[clamp(3.5rem,14vw,11rem)]">0,00</span>
-        <span ref={tailRef} className="ml-1 text-[clamp(1.5rem,5vw,4rem)] text-ember/70">0</span>
+        <span ref={mainRef} className="text-[clamp(3.5rem,14vw,11rem)]">
+          0,00
+        </span>
+        <span ref={tailRef} className="ml-1 text-[clamp(1.5rem,5vw,4rem)] text-ember/70">
+          0
+        </span>
         <span className="ml-3 text-[clamp(1.5rem,5vw,4rem)] text-ember">€</span>
       </motion.div>
     </div>

@@ -22,7 +22,11 @@ const MAX_HEADCOUNT = 99
 
 const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v)
 
-function sanitizeRecord(raw: unknown, fallback: Record<CategoryId, number>, clamp: (n: number) => number) {
+function sanitizeRecord(
+  raw: unknown,
+  fallback: Record<CategoryId, number>,
+  clamp: (n: number) => number,
+) {
   const src = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>
   return Object.fromEntries(
     CATEGORY_IDS.map((id) => [id, isNum(src[id]) ? clamp(src[id]) : fallback[id]]),
@@ -85,11 +89,7 @@ export function useMeeting() {
     0,
     (r) => (isNum(r) ? Math.max(0, Math.round(r)) : 0),
   )
-  const [teams, setTeams] = usePersistentState<TeamPreset[]>(
-    'bbb.teams.v1',
-    [],
-    sanitizeTeams,
-  )
+  const [teams, setTeams] = usePersistentState<TeamPreset[]>('bbb.teams.v1', [], sanitizeTeams)
 
   const currentBurnRate = burnRatePerHour(headcounts, rates)
 
@@ -169,4 +169,3 @@ export function useMeeting() {
     maxHeadcount: MAX_HEADCOUNT,
   }
 }
-

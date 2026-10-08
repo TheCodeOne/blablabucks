@@ -45,7 +45,17 @@ const defaultOpen = () =>
  * Headcount per Category with +/- controls. Live: changes apply to a running meeting immediately.
  * Collapsible; the collapsed bar summarizes who's in the room.
  */
-export function QuickSettings({ headcounts, rates, maxHeadcount, onChange, readOnly, teams = [], onLoadTeam, onSaveTeam, onDeleteTeam }: Props) {
+export function QuickSettings({
+  headcounts,
+  rates,
+  maxHeadcount,
+  onChange,
+  readOnly,
+  teams = [],
+  onLoadTeam,
+  onSaveTeam,
+  onDeleteTeam,
+}: Props) {
   const [open, setOpen] = usePersistentState<boolean>(
     'bbb.quickSettingsOpen.v1',
     defaultOpen(),
@@ -90,12 +100,19 @@ export function QuickSettings({ headcounts, rates, maxHeadcount, onChange, readO
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ type: 'spring', stiffness: 380, damping: 36, opacity: { duration: 0.15 } }}
+            transition={{
+              type: 'spring',
+              stiffness: 380,
+              damping: 36,
+              opacity: { duration: 0.15 },
+            }}
             className="overflow-hidden"
           >
             {!readOnly && (
               <div className="flex flex-wrap items-center gap-2 border-t border-border bg-card p-3 sm:px-4">
-                <span className="mr-1 text-xs font-medium uppercase tracking-wider text-ash">Presets</span>
+                <span className="mr-1 text-xs font-medium uppercase tracking-wider text-ash">
+                  Presets
+                </span>
                 {teams.map((team) => (
                   <div key={team.id} className="flex items-center">
                     <button
@@ -167,17 +184,29 @@ function CategoryRow({
     >
       <div className="flex min-w-0 flex-col sm:flex-row sm:items-start sm:justify-between sm:gap-2">
         <div className="flex items-center gap-2 truncate">
-          <Icon className={cn("size-4 shrink-0", active ? "text-ember" : "text-ash/50")} />
+          <Icon className={cn('size-4 shrink-0', active ? 'text-ember' : 'text-ash/50')} />
           <span className="truncate text-sm leading-tight font-medium">{label}</span>
         </div>
         {!readOnly && (
-          <span className="font-mono text-[0.65rem] whitespace-nowrap text-ash">{formatRate(rate)}/h</span>
+          <span className="font-mono text-[0.65rem] whitespace-nowrap text-ash">
+            {formatRate(rate)}/h
+          </span>
         )}
       </div>
 
-      <div className={cn('flex shrink-0 items-center gap-1', !readOnly && 'sm:justify-between sm:gap-0', readOnly && 'justify-end')}>
+      <div
+        className={cn(
+          'flex shrink-0 items-center gap-1',
+          !readOnly && 'sm:justify-between sm:gap-0',
+          readOnly && 'justify-end',
+        )}
+      >
         {!readOnly && (
-          <StepButton label={`Remove one ${label}`} disabled={count === 0} onClick={() => onChange(-1)}>
+          <StepButton
+            label={`Remove one ${label}`}
+            disabled={count === 0}
+            onClick={() => onChange(-1)}
+          >
             <MinusIcon />
           </StepButton>
         )}
@@ -202,7 +231,11 @@ function CategoryRow({
         </div>
 
         {!readOnly && (
-          <StepButton label={`Add one ${label}`} disabled={count >= max} onClick={() => onChange(1)}>
+          <StepButton
+            label={`Add one ${label}`}
+            disabled={count >= max}
+            onClick={() => onChange(1)}
+          >
             <PlusIcon />
           </StepButton>
         )}
@@ -236,7 +269,13 @@ function StepButton({
   )
 }
 
-function SaveTeamButton({ onSave, disabled }: { onSave?: (name: string) => void; disabled: boolean }) {
+function SaveTeamButton({
+  onSave,
+  disabled,
+}: {
+  onSave?: (name: string) => void
+  disabled: boolean
+}) {
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState('')
 

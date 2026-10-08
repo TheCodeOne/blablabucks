@@ -41,7 +41,12 @@ export function SettingsModal({ rates, onSave }: { rates: Rates; onSave: (rates:
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger
         render={
-          <Button variant="ghost" size="icon-lg" aria-label="Settings" className="text-ash hover:text-ember" />
+          <Button
+            variant="ghost"
+            size="icon-lg"
+            aria-label="Settings"
+            className="text-ash hover:text-ember"
+          />
         }
       >
         <SettingsIcon />
@@ -84,7 +89,9 @@ export function SettingsModal({ rates, onSave }: { rates: Rates; onSave: (rates:
               variant="ghost"
               className="text-ash"
               onClick={() =>
-                setDraft(Object.fromEntries(CATEGORIES.map((c) => [c.id, String(DEFAULT_RATES[c.id])])))
+                setDraft(
+                  Object.fromEntries(CATEGORIES.map((c) => [c.id, String(DEFAULT_RATES[c.id])])),
+                )
               }
             >
               <RotateCcwIcon /> Defaults

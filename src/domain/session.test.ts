@@ -1,14 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { EMPTY_HEADCOUNTS, DEFAULT_RATES } from './categories'
-import {
-  IDLE_SESSION,
-  burnRatePerHour,
-  costAt,
-  elapsedMsAt,
-  pause,
-  rebase,
-  start,
-} from './session'
+import { IDLE_SESSION, burnRatePerHour, costAt, elapsedMsAt, pause, rebase, start } from './session'
 
 const MIN = 60_000
 const HOUR = 60 * MIN
