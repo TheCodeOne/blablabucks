@@ -35,8 +35,9 @@ export const CATEGORY_ICONS: Record<CategoryIcon, React.ElementType> = {
 type Props = {
   headcounts: Headcounts
   categories: Category[]
-  maxHeadcount: number
+  maxHeadcount?: number
   onChange: (id: CategoryId, delta: number) => void
+  onSetHeadcount?: (id: CategoryId, count: number) => void
   readOnly?: boolean
   teams?: TeamPreset[]
   onLoadTeam?: (headcounts: Headcounts) => void
@@ -57,6 +58,7 @@ export function QuickSettings({
   categories,
   maxHeadcount,
   onChange,
+  onSetHeadcount,
   readOnly,
   teams = [],
   onLoadTeam,
@@ -152,6 +154,7 @@ export function QuickSettings({
                   count={headcounts[c.id] || 0}
                   max={maxHeadcount}
                   onChange={(delta) => onChange(c.id, delta)}
+                  onSetCount={onSetHeadcount ? (val) => onSetHeadcount(c.id, val) : undefined}
                   readOnly={readOnly}
                 />
               ))}
@@ -171,17 +174,28 @@ function CategoryRow({
   count,
   max,
   onChange,
+  onSetCount,
   readOnly,
 }: {
   icon: React.ElementType
   label: string
   rate: number
   count: number
-  max: number
+  max?: number
   onChange: (delta: number) => void
+  onSetCount?: (count: number) => void
   readOnly?: boolean
 }) {
   const active = count > 0
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState('')
+
+  const commit = () => {
+    const val = Math.max(0, Math.round(Number(draft) || 0))
+    onSetCount?.(val)
+    setEditing(false)
+  }
+
   return (
     <li
       className={cn(
@@ -218,29 +232,78 @@ function CategoryRow({
           </StepButton>
         )}
 
-        <div className="relative h-8 w-10 overflow-hidden text-center sm:h-10 sm:w-12">
-          <AnimatePresence mode="popLayout" initial={false}>
-            <motion.span
-              key={count}
-              initial={{ y: 16, opacity: 0, filter: 'blur(4px)' }}
-              animate={{ y: 0, opacity: 1, filter: 'blur(0px)' }}
-              exit={{ y: -16, opacity: 0, filter: 'blur(4px)' }}
-              transition={{ type: 'spring', stiffness: 500, damping: 32 }}
-              className={cn(
-                'absolute inset-0 font-mono text-xl leading-8 tabular-nums sm:text-3xl sm:leading-10',
-                active ? 'text-foreground' : 'text-ash/50',
-              )}
-              aria-live="polite"
-            >
-              {count}
-            </motion.span>
-          </AnimatePresence>
-        </div>
+        {editing ? (
+          <form
+            onSubmit={(e) => {
+              e.preventDefault()
+              commit()
+            }}
+            className="relative flex h-8 min-w-10 items-center justify-center sm:h-10 sm:min-w-14"
+          >
+            <input
+              autoFocus
+              type="number"
+              min={0}
+              inputMode="numeric"
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onBlur={commit}
+              onFocus={(e) => e.target.select()}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') {
+                  setDraft(String(count))
+                  setEditing(false)
+                }
+              }}
+              className="h-8 w-14 rounded-md border border-input bg-input/40 px-1 text-center font-mono text-base tabular-nums focus-visible:border-ring focus-visible:ring-1 focus-visible:outline-none sm:h-10 sm:w-16 sm:text-lg"
+            />
+          </form>
+        ) : (
+          <button
+            type="button"
+            disabled={readOnly || !onSetCount}
+            onClick={() => {
+              if (!readOnly && onSetCount) {
+                setDraft(String(count))
+                setEditing(true)
+              }
+            }}
+            title={readOnly || !onSetCount ? undefined : `Click to edit ${label} count`}
+            className={cn(
+              'relative h-8 min-w-10 overflow-hidden px-1 text-center rounded transition-colors sm:h-10 sm:min-w-14',
+              !readOnly &&
+                onSetCount &&
+                'cursor-pointer hover:bg-accent/60 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+            )}
+          >
+            <AnimatePresence mode="popLayout" initial={false}>
+              <motion.span
+                key={count}
+                initial={{ y: 16, opacity: 0, filter: 'blur(4px)' }}
+                animate={{ y: 0, opacity: 1, filter: 'blur(0px)' }}
+                exit={{ y: -16, opacity: 0, filter: 'blur(4px)' }}
+                transition={{ type: 'spring', stiffness: 500, damping: 32 }}
+                className={cn(
+                  'absolute inset-0 font-mono leading-8 tabular-nums sm:leading-10',
+                  count >= 1000
+                    ? 'text-sm sm:text-xl'
+                    : count >= 100
+                      ? 'text-base sm:text-2xl'
+                      : 'text-xl sm:text-3xl',
+                  active ? 'text-foreground' : 'text-ash/50',
+                )}
+                aria-live="polite"
+              >
+                {count}
+              </motion.span>
+            </AnimatePresence>
+          </button>
+        )}
 
         {!readOnly && (
           <StepButton
             label={`Add one ${label}`}
-            disabled={count >= max}
+            disabled={max !== undefined && count >= max}
             onClick={() => onChange(1)}
           >
             <PlusIcon />

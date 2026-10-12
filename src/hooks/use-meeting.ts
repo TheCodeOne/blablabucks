@@ -17,12 +17,10 @@ import {
 import { type TeamPreset } from '@/domain/teams'
 import { usePersistentState } from '@/lib/use-persistent-state'
 
-const MAX_HEADCOUNT = 99
-
 const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v)
 
 const clampRate = (n: number) => Math.max(0, n)
-const clampHeadcount = (n: number) => Math.min(MAX_HEADCOUNT, Math.max(0, Math.round(n)))
+const clampHeadcount = (n: number) => Math.max(0, Math.round(n))
 
 function sanitizeCategories(raw: unknown): Category[] {
   if (!Array.isArray(raw)) return DEFAULT_CATEGORIES
@@ -124,6 +122,15 @@ export function useMeeting() {
     [headcounts, categories, setHeadcountsRaw, applyRate],
   )
 
+  const setHeadcount = useCallback(
+    (id: CategoryId, count: number) => {
+      const next = { ...headcounts, [id]: clampHeadcount(count) }
+      setHeadcountsRaw(next)
+      applyRate(burnRatePerHour(next, categories))
+    },
+    [headcounts, categories, setHeadcountsRaw, applyRate],
+  )
+
   const setCategories = useCallback(
     (next: Category[]) => {
       const clean = sanitizeCategories(next)
@@ -178,6 +185,7 @@ export function useMeeting() {
     setCategories,
     headcounts,
     changeHeadcount,
+    setHeadcount,
     teams,
     loadTeam,
     saveTeam,
@@ -189,6 +197,5 @@ export function useMeeting() {
     start,
     pause,
     reset,
-    maxHeadcount: MAX_HEADCOUNT,
   }
 }

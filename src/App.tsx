@@ -123,13 +123,7 @@ function ViewerApp({ state }: { state: SharedState }) {
       </main>
 
       <footer className="pb-2">
-        <QuickSettings
-          headcounts={state.h}
-          categories={state.c}
-          maxHeadcount={99}
-          onChange={() => {}}
-          readOnly
-        />
+        <QuickSettings headcounts={state.h} categories={state.c} onChange={() => {}} readOnly />
       </footer>
     </div>
   )
@@ -241,8 +235,8 @@ function HostApp() {
         <QuickSettings
           headcounts={m.headcounts}
           categories={m.categories}
-          maxHeadcount={m.maxHeadcount}
           onChange={m.changeHeadcount}
+          onSetHeadcount={m.setHeadcount}
           teams={m.teams}
           onLoadTeam={m.loadTeam}
           onSaveTeam={m.saveTeam}
