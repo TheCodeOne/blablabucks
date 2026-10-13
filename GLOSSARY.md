@@ -16,3 +16,10 @@ This file defines the domain language for the **Burn Rate Tracker** application.
 - **Settings Modal**: The configuration UI where Rates are defined.
 - **Quick Settings**: The UI on the main screen containing `+` and `-` buttons to adjust the Headcount dynamically without stopping the tracker.
 - **Session State**: The data required to make the tracker resilient to tab throttling and page refreshes. It consists of the `accumulatedCost` (up to the last change), the `lastChangeTimestamp` (absolute time of the last Headcount change or start), and the current `Burn Rate`.
+- **Room**: An active shared session identified by a slug (e.g. `delayed-agile-checkin`), managed in real-time by a Cloudflare Durable Object.
+- **Host**: The user who initialized the Room. Holds a private Host Token allowing them to control meeting tracking, delete buzzwords, and toggle room features.
+- **Buzzword Bingo**: An interactive feature in a shared Room allowing participants to track repeated speaker catchphrases.
+- **Buzzword**: A tracked phrase (up to 32 characters) added to a Room with an accumulating Tally Counter.
+- **Tally Counter**: The aggregated count of distinct occurrences of a Buzzword, deduplicated within a 5-second cooldown window.
+- **Reaction Bubble**: An instant, unthrottled floating notification that appears on all participants' screens when a Buzzword is clicked.
+- **Participant Name**: The display name of an attendee in a Room, chosen by the user or assigned as a funny default.
