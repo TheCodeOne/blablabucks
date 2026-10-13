@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { UserIcon, ShuffleIcon, PencilIcon, XIcon, CheckIcon } from 'lucide-react'
 import {
@@ -28,21 +28,38 @@ export function ParticipantModal({
 }: ParticipantModalProps) {
   const [draft, setDraft] = useState(name)
 
-  const otherParticipants = participants.filter((p) => p.toLowerCase() !== name.toLowerCase())
-
   const cleanDraft = sanitizeParticipantName(draft)
+
+  // Check if any other participant currently holds this name (strictly case-insensitive)
   const isTaken = Boolean(
-    cleanDraft && otherParticipants.some((p) => p.toLowerCase() === cleanDraft.toLowerCase()),
+    cleanDraft &&
+    participants.some((p) => {
+      const isMatch = p.trim().toLowerCase() === cleanDraft.toLowerCase()
+      if (!isMatch) return false
+      if (isInitialPrompt) return true
+      return p.trim().toLowerCase() !== name.trim().toLowerCase()
+    }),
   )
 
+  useEffect(() => {
+    if (
+      isInitialPrompt &&
+      participants.some((p) => p.trim().toLowerCase() === name.trim().toLowerCase())
+    ) {
+      setDraft(getRandomPersona(participants))
+    } else {
+      setDraft(name)
+    }
+  }, [name, isInitialPrompt, participants])
+
   const handleRollPersona = () => {
-    setDraft(getRandomPersona(otherParticipants))
+    setDraft(getRandomPersona(participants))
   }
 
   const handleSave = (e?: React.FormEvent) => {
     e?.preventDefault()
     if (isTaken || !cleanDraft) return
-    const clean = cleanDraft || name || getRandomPersona(otherParticipants)
+    const clean = cleanDraft || name || getRandomPersona(participants)
     setStoredParticipantName(clean)
     onSave(clean)
     onClose()

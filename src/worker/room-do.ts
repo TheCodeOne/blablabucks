@@ -211,7 +211,7 @@ export class RoomDO extends DurableObject {
 
       const active = this.getActiveSockets()
       const takenNames = active
-        .filter((a) => (role === 'host' ? a.role !== 'host' : a.clientId !== clientId))
+        .filter((a) => a.clientId !== clientId)
         .map((a) => a.userName)
         .filter((n): n is string => Boolean(n))
 
@@ -344,7 +344,7 @@ export class RoomDO extends DurableObject {
           type: 'buzzword_reaction',
           id: word.id,
           text: word.text,
-          userName: data.userName || 'Anonymous',
+          userName: attachment?.userName || 'Anonymous',
         })
         return
       }
@@ -372,36 +372,45 @@ export class RoomDO extends DurableObject {
 
       if (data.type === 'set_presence') {
         const targetName = sanitizeParticipantName(data.userName)
+        const currentAttachment = ws.deserializeAttachment() as SocketAttachment | null
+        const currentName = currentAttachment?.userName || ''
+
         if (!targetName) {
-          ws.send(JSON.stringify({ type: 'error', message: 'Name cannot be empty' }))
+          ws.send(
+            JSON.stringify({
+              type: 'name_rejected',
+              currentName,
+              message: 'Name cannot be empty',
+            }),
+          )
           return
         }
 
         const active = this.getActiveSockets()
         const isTaken = active.some((a) => {
           if (a.socket === ws) return false
-          if (role === 'host' && a.role === 'host') return false
-          if (attachment?.clientId && a.clientId === attachment.clientId) return false
-          return a.userName?.toLowerCase() === targetName.toLowerCase()
+          if (currentAttachment?.clientId && a.clientId === currentAttachment.clientId) return false
+          return a.userName?.trim().toLowerCase() === targetName.toLowerCase()
         })
 
         if (isTaken) {
           ws.send(
             JSON.stringify({
-              type: 'error',
+              type: 'name_rejected',
+              currentName,
               message: `The name "${targetName}" is already taken in this room.`,
             }),
           )
           return
         }
 
-        const attachment = ws.deserializeAttachment() as SocketAttachment | null
         const updated: SocketAttachment = {
-          role: attachment?.role ?? 'viewer',
-          clientId: attachment?.clientId ?? '',
+          role: currentAttachment?.role ?? 'viewer',
+          clientId: currentAttachment?.clientId ?? '',
           userName: targetName,
         }
         ws.serializeAttachment(updated)
+        ws.send(JSON.stringify({ type: 'name_accepted', userName: targetName }))
         this.broadcastPresence()
         return
       }

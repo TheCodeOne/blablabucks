@@ -130,6 +130,11 @@ export function useRoomSync({
           } else if (msg.type === 'presence_updated') {
             setPresenceCount(msg.count)
             setParticipants(msg.participants)
+          } else if (msg.type === 'name_accepted') {
+            onAssignedNameRef.current?.(msg.userName)
+          } else if (msg.type === 'name_rejected') {
+            onAssignedNameRef.current?.(msg.currentName)
+            onErrorRef.current?.(msg.message)
           } else if (msg.type === 'error') {
             onErrorRef.current?.(msg.message)
             console.error('Room error:', msg.message)

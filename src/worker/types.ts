@@ -75,6 +75,15 @@ export type ServerMessage =
       participants: string[]
     }
   | {
+      type: 'name_accepted'
+      userName: string
+    }
+  | {
+      type: 'name_rejected'
+      currentName: string
+      message: string
+    }
+  | {
       type: 'error'
       message: string
     }

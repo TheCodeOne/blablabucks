@@ -17,7 +17,7 @@ import { QuickSettings } from '@/components/quick-settings'
 import { ReactionBubbles, type ReactionEvent } from '@/components/reaction-bubbles'
 import { SettingsModal } from '@/components/settings-modal'
 import { Taxameter } from '@/components/taxameter'
-import { getStoredParticipantName } from '@/domain/participant'
+import { getStoredParticipantName, setStoredParticipantName } from '@/domain/participant'
 import { useMeeting } from '@/hooks/use-meeting'
 import { useRoomSync } from '@/hooks/use-room-sync'
 import { formatMoney, formatRate } from '@/lib/format'
@@ -241,7 +241,10 @@ function ViewerApp({ slug }: { slug: string }) {
       setHeadcounts(update.headcounts)
     },
     onReaction: (r) => setReaction(r),
-    onAssignedName: (name) => setUserName(name),
+    onAssignedName: (name) => {
+      setUserName(name)
+      setStoredParticipantName(name)
+    },
   })
 
   useEffect(() => {
@@ -395,7 +398,10 @@ function HostApp({
     hostToken,
     userName,
     onReaction: (r) => setReaction(r),
-    onAssignedName: (name) => setUserName(name),
+    onAssignedName: (name) => {
+      setUserName(name)
+      setStoredParticipantName(name)
+    },
   })
 
   // Whenever session, categories, or headcounts change, broadcast to room if in one

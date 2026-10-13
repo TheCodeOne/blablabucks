@@ -11,7 +11,16 @@ type PresenceBadgeProps = {
 export function PresenceBadge({ count, participants = [], className }: PresenceBadgeProps) {
   const [open, setOpen] = useState(false)
 
-  const distinctParticipants = Array.from(new Set(participants.filter(Boolean)))
+  const seenLower = new Set<string>()
+  const distinctParticipants: string[] = []
+  for (const p of participants) {
+    if (!p) continue
+    const lower = p.trim().toLowerCase()
+    if (!seenLower.has(lower)) {
+      seenLower.add(lower)
+      distinctParticipants.push(p)
+    }
+  }
 
   return (
     <div className={cn('relative inline-flex items-center', className)}>

@@ -43,6 +43,23 @@ describe('participant domain', () => {
       const name = resolveUniqueParticipantName('sleepy stakeholder', ['SLEEPY STAKEHOLDER'])
       expect(name.toLowerCase()).not.toBe('sleepy stakeholder')
     })
+
+    it('strictly forbids "Dimi" if "dimi" is already in taken names', () => {
+      const name = resolveUniqueParticipantName('Dimi', ['dimi'])
+      expect(name.toLowerCase()).not.toBe('dimi')
+      expect(FUNNY_PERSONAS).toContain(name)
+    })
+
+    it('strictly forbids "dimi" if "Dimi" is already in taken names', () => {
+      const name = resolveUniqueParticipantName('dimi', ['Dimi'])
+      expect(name.toLowerCase()).not.toBe('dimi')
+      expect(FUNNY_PERSONAS).toContain(name)
+    })
+
+    it('handles whitespace variations when checking taken names', () => {
+      const name = resolveUniqueParticipantName('  dimi  ', ['Dimi'])
+      expect(name.toLowerCase()).not.toBe('dimi')
+    })
   })
 
   describe('sanitizeParticipantName', () => {
