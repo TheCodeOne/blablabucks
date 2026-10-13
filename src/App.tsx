@@ -226,7 +226,6 @@ function ViewerApp({ slug }: { slug: string }) {
     connected,
     presenceCount,
     participants,
-    initialState,
     buzzwords,
     buzzwordsEnabled,
     error,
@@ -246,14 +245,6 @@ function ViewerApp({ slug }: { slug: string }) {
       setStoredParticipantName(name)
     },
   })
-
-  useEffect(() => {
-    if (initialState) {
-      setSession(initialState.session)
-      setCategories(initialState.categories)
-      setHeadcounts(initialState.headcounts)
-    }
-  }, [initialState])
 
   if (error) {
     return (

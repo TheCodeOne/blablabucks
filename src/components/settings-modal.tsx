@@ -15,7 +15,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select'
-import { CATEGORY_ICONS } from '@/components/quick-settings'
+import { CATEGORY_ICONS } from '@/components/category-icons'
 
 /** Settings Modal: manage roles (categories). Edits are drafted locally and only applied on save. */
 export function SettingsModal({

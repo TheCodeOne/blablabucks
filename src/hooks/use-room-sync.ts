@@ -112,6 +112,11 @@ export function useRoomSync({
             setInitialState(msg.state)
             setBuzzwords(msg.state.buzzwords || [])
             setBuzzwordsEnabled(msg.state.buzzwordsEnabled ?? true)
+            onSessionUpdatedRef.current?.({
+              session: msg.state.session,
+              categories: msg.state.categories,
+              headcounts: msg.state.headcounts,
+            })
             if (msg.userName) {
               onAssignedNameRef.current?.(msg.userName)
             }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { UserIcon, ShuffleIcon, PencilIcon, XIcon, CheckIcon } from 'lucide-react'
 import {
@@ -26,7 +26,18 @@ export function ParticipantModal({
   onSave,
   isInitialPrompt = false,
 }: ParticipantModalProps) {
-  const [draft, setDraft] = useState(name)
+  const isTakenInitial =
+    isInitialPrompt &&
+    participants.some((p) => p.trim().toLowerCase() === name.trim().toLowerCase())
+  const initialValue = isTakenInitial ? getRandomPersona(participants) : name
+
+  const [draft, setDraft] = useState(initialValue)
+  const [prevName, setPrevName] = useState(name)
+
+  if (prevName !== name) {
+    setPrevName(name)
+    setDraft(initialValue)
+  }
 
   const cleanDraft = sanitizeParticipantName(draft)
 
@@ -40,17 +51,6 @@ export function ParticipantModal({
       return p.trim().toLowerCase() !== name.trim().toLowerCase()
     }),
   )
-
-  useEffect(() => {
-    if (
-      isInitialPrompt &&
-      participants.some((p) => p.trim().toLowerCase() === name.trim().toLowerCase())
-    ) {
-      setDraft(getRandomPersona(participants))
-    } else {
-      setDraft(name)
-    }
-  }, [name, isInitialPrompt, participants])
 
   const handleRollPersona = () => {
     setDraft(getRandomPersona(participants))

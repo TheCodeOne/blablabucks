@@ -1,36 +1,13 @@
 import { useId, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import {
-  ChevronUpIcon,
-  MinusIcon,
-  PlusIcon,
-  UsersIcon,
-  Trash2Icon,
-  BriefcaseIcon,
-  CodeIcon,
-  UserIcon,
-  GlobeIcon,
-  LaptopIcon,
-} from 'lucide-react'
-import {
-  type Category,
-  type CategoryId,
-  type Headcounts,
-  type CategoryIcon,
-} from '@/domain/categories'
+import { ChevronUpIcon, MinusIcon, PlusIcon, UsersIcon, Trash2Icon, UserIcon } from 'lucide-react'
+import { type Category, type CategoryId, type Headcounts } from '@/domain/categories'
 import { type TeamPreset } from '@/domain/teams'
 import { formatRate } from '@/lib/format'
 import { usePersistentState } from '@/lib/use-persistent-state'
 import { cn } from '@/lib/utils'
 
-export const CATEGORY_ICONS: Record<CategoryIcon, React.ElementType> = {
-  briefcase: BriefcaseIcon,
-  code: CodeIcon,
-  user: UserIcon,
-  users: UsersIcon,
-  globe: GlobeIcon,
-  laptop: LaptopIcon,
-}
+import { CATEGORY_ICONS } from './category-icons'
 
 type Props = {
   headcounts: Headcounts

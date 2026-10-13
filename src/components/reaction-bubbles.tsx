@@ -27,25 +27,29 @@ export function ReactionBubbles({ reaction }: ReactionBubblesProps) {
   useEffect(() => {
     if (!reaction) return
 
-    const key = `${reaction.id}-${Date.now()}-${Math.random()}`
-    // Random horizontal position between 12% and 82%
-    const left = 12 + Math.random() * 70
-    // Slight random drift between -35px and 35px
-    const drift = (Math.random() - 0.5) * 70
-    // Duration between 7.5s and 9.5s for a calm, slow rise
-    const duration = 7.5 + Math.random() * 2.0
+    const id = requestAnimationFrame(() => {
+      const key = `${reaction.id}-${Date.now()}-${Math.random()}`
+      // Random horizontal position between 12% and 82%
+      const left = 12 + Math.random() * 70
+      // Slight random drift between -35px and 35px
+      const drift = (Math.random() - 0.5) * 70
+      // Duration between 7.5s and 9.5s for a calm, slow rise
+      const duration = 7.5 + Math.random() * 2.0
 
-    setBubbles((prev) => [
-      ...prev.slice(-30), // Cap max concurrent bubbles to prevent performance issues
-      {
-        key,
-        text: reaction.text,
-        userName: reaction.userName,
-        left,
-        drift,
-        duration,
-      },
-    ])
+      setBubbles((prev) => [
+        ...prev.slice(-30), // Cap max concurrent bubbles to prevent performance issues
+        {
+          key,
+          text: reaction.text,
+          userName: reaction.userName,
+          left,
+          drift,
+          duration,
+        },
+      ])
+    })
+
+    return () => cancelAnimationFrame(id)
   }, [reaction])
 
   const handleComplete = (key: string) => {
