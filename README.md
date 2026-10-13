@@ -45,23 +45,14 @@ npx wrangler login   # Only needed once
 npm run deploy       # Runs build + wrangler deploy
 ```
 
-### Option 2: Cloudflare Dashboard Git Integration (Zero Secrets Required)
+### Option 2: Cloudflare Dashboard Git Integration (Zero Secrets)
+
+Connect the repository directly inside Cloudflare (identical to `beat`):
 
 1. Open the [Cloudflare Dashboard](https://dash.cloudflare.com/) -> **Compute (Workers & Pages)** -> **Create application** -> **Workers**.
-2. Click **Connect to Git** and choose this repository.
+2. Click **Connect to Git** and select this repository.
 3. Build command: `npm run build`
-4. Cloudflare will automatically deploy your Worker, Durable Objects, and static SPA assets on every push.
-
-### Option 3: GitHub Actions CI/CD
-
-The workflow in `.github/workflows/deploy.yml` automatically verifies linting, types, unit tests, and builds on every push to `main`.
-
-If you wish to have GitHub Actions also handle deployment, add the following repository secrets under **Settings -> Secrets and variables -> Actions**:
-
-1. `CLOUDFLARE_API_TOKEN`: Cloudflare API token with "Edit Cloudflare Workers" permissions.
-2. `CLOUDFLARE_ACCOUNT_ID`: Your Cloudflare Account ID.
-
-If these secrets are not configured, the workflow still runs full CI verification and passes safely without attempting a deployment.
+4. Deploy! Cloudflare automatically handles the build, worker, and Durable Objects on every push to `main` without any tokens or secrets.
 
 ### Attaching Custom Domain (`blablabucks.dimi.cool`)
 
