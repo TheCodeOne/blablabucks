@@ -32,16 +32,36 @@ npm run build   # tsc + vite build (client + worker)
 
 **Stack:** React 19 + Vite, Tailwind CSS v4, Base UI, Motion, Lucide Icons, and Cloudflare Workers (Static Assets + Durable Objects).
 
-## Deployment & CI/CD
+## Deployment
 
-Deployment is automated via GitHub Actions on every push to `main` (`.github/workflows/deploy.yml`).
+blablabucks is compatible with the Cloudflare **Free Tier** using SQLite-backed Durable Objects (`new_sqlite_classes`). No paid subscription or external database is required.
 
-### Required GitHub Secrets
+### Option 1: Direct CLI Deploy (Zero Secrets Required)
 
-Go to **GitHub Repository -> Settings -> Secrets and variables -> Actions** and add:
+Log in once to Wrangler and deploy directly from your machine:
 
-1. `CLOUDFLARE_API_TOKEN`: Cloudflare API token with `Account:Workers Scripts:Edit`, `Account:Workers KV Storage:Edit`, and `Account:Durable Objects:Edit` (or the default "Edit Cloudflare Workers" template).
-2. `CLOUDFLARE_ACCOUNT_ID`: Your Cloudflare Account ID (found on your Cloudflare dashboard overview or URL).
+```sh
+npx wrangler login   # Only needed once
+npm run deploy       # Runs build + wrangler deploy
+```
+
+### Option 2: Cloudflare Dashboard Git Integration (Zero Secrets Required)
+
+1. Open the [Cloudflare Dashboard](https://dash.cloudflare.com/) -> **Compute (Workers & Pages)** -> **Create application** -> **Workers**.
+2. Click **Connect to Git** and choose this repository.
+3. Build command: `npm run build`
+4. Cloudflare will automatically deploy your Worker, Durable Objects, and static SPA assets on every push.
+
+### Option 3: GitHub Actions CI/CD
+
+The workflow in `.github/workflows/deploy.yml` automatically verifies linting, types, unit tests, and builds on every push to `main`.
+
+If you wish to have GitHub Actions also handle deployment, add the following repository secrets under **Settings -> Secrets and variables -> Actions**:
+
+1. `CLOUDFLARE_API_TOKEN`: Cloudflare API token with "Edit Cloudflare Workers" permissions.
+2. `CLOUDFLARE_ACCOUNT_ID`: Your Cloudflare Account ID.
+
+If these secrets are not configured, the workflow still runs full CI verification and passes safely without attempting a deployment.
 
 ### Attaching Custom Domain (`blablabucks.dimi.cool`)
 

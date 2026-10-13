@@ -14,8 +14,8 @@ These rules define the design, aesthetic, and technical decisions for **blablabu
 
 ## 2. Technical Decisions
 
-- **Local State First:** We use `usePersistentState` to store all session data in `localStorage`. The app must work flawlessly after a page reload.
-- **Cloudflare KV for Sharing:** Shared links use Cloudflare Pages Functions (`functions/api/share/index.ts`). Do not build a complex backend database.
+- **Local State First:** We store solo session data in `localStorage`. The app works flawlessly after a page reload.
+- **Cloudflare Workers & Durable Objects for Real-Time Sync:** Shared live rooms use Cloudflare Durable Objects (`RoomDO`) with WebSocket Hibernation and SQLite storage. Do not build an external database.
 - **Component Styling:** Use Tailwind CSS combined with `cn()` utility (`clsx` + `tailwind-merge`) for dynamic classes.
 - **Animations:** Use `motion/react` (Framer Motion) for fluid transitions (like the Taxameter cost ticking up or panels expanding). Keep animations snappy (e.g. `type: 'spring', stiffness: 400`).
 
