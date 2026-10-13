@@ -7,6 +7,7 @@ import {
 } from '@/domain/buzzword'
 import { DEFAULT_CATEGORIES, type Category, type Headcounts } from '@/domain/categories'
 import { IDLE_SESSION, type Session } from '@/domain/session'
+import { resolveUniqueParticipantName, sanitizeParticipantName } from '@/domain/participant'
 import type {
   ClientMessage,
   ClientRole,
@@ -22,9 +23,63 @@ export class RoomDO extends DurableObject {
     this.ctx.storage.setAlarm(Date.now() + ROOM_TTL_MS)
   }
 
-  private broadcast(msg: ServerMessage) {
+  private getActiveSockets(excludeSocket?: WebSocket): {
+    socket: WebSocket
+    clientId: string
+    role: ClientRole
+    userName?: string
+  }[] {
+    const active: {
+      socket: WebSocket
+      clientId: string
+      role: ClientRole
+      userName?: string
+    }[] = []
+    const seenClients = new Set<string>()
+
+    const sockets = this.ctx.getWebSockets()
+    // Iterate in reverse (newest sockets first)
+    for (let i = sockets.length - 1; i >= 0; i--) {
+      const socket = sockets[i]
+      if (socket === excludeSocket) continue
+      // Cloudflare Workers WebSocket readyState: 1 is WebSocket.OPEN
+      if (socket.readyState !== 1) continue
+
+      try {
+        const attachment = socket.deserializeAttachment() as SocketAttachment | null
+        if (!attachment) continue
+
+        const clientId = attachment.clientId || ''
+        const clientKey = attachment.role === 'host' ? 'role:host' : `client:${clientId}`
+
+        if (seenClients.has(clientKey)) {
+          try {
+            socket.close(1000, 'Duplicate client connection')
+          } catch {
+            // ignore
+          }
+          continue
+        }
+
+        seenClients.add(clientKey)
+        active.push({
+          socket,
+          clientId,
+          role: attachment.role,
+          userName: attachment.userName,
+        })
+      } catch {
+        // ignore
+      }
+    }
+    return active
+  }
+
+  private broadcast(msg: ServerMessage, excludeSocket?: WebSocket) {
     const payload = JSON.stringify(msg)
     for (const socket of this.ctx.getWebSockets()) {
+      if (socket === excludeSocket) continue
+      if (socket.readyState !== 1) continue
       try {
         socket.send(payload)
       } catch {
@@ -33,25 +88,31 @@ export class RoomDO extends DurableObject {
     }
   }
 
-  private broadcastPresence() {
+  private broadcastPresence(excludeSocket?: WebSocket) {
+    const active = this.getActiveSockets(excludeSocket)
     const participants: string[] = []
-    let count = 0
-    for (const socket of this.ctx.getWebSockets()) {
-      count++
-      try {
-        const attachment = socket.deserializeAttachment() as SocketAttachment | null
-        if (attachment?.userName) {
-          participants.push(attachment.userName)
+    const seen = new Set<string>()
+
+    for (const item of active) {
+      if (item.userName) {
+        const lower = item.userName.toLowerCase()
+        if (!seen.has(lower)) {
+          seen.add(lower)
+          participants.push(item.userName)
         }
-      } catch {
-        // ignore
       }
     }
-    this.broadcast({
-      type: 'presence_updated',
-      count,
-      participants,
-    })
+
+    const count = participants.length
+
+    this.broadcast(
+      {
+        type: 'presence_updated',
+        count,
+        participants,
+      },
+      excludeSocket,
+    )
   }
 
   private async getSnapshot(): Promise<RoomStateSnapshot> {
@@ -121,19 +182,53 @@ export class RoomDO extends DurableObject {
       const role: ClientRole =
         Boolean(storedHostToken) && token === storedHostToken ? 'host' : 'viewer'
 
+      const clientId = url.searchParams.get('clientId') || crypto.randomUUID()
+
+      // Close previous socket for same host / client so reconnecting tabs don't inflate presence
+      for (const socket of this.ctx.getWebSockets()) {
+        try {
+          const attachment = socket.deserializeAttachment() as SocketAttachment | null
+          if (!attachment) continue
+          const isSameClient =
+            (role === 'host' && attachment.role === 'host') ||
+            (Boolean(clientId) && attachment.clientId === clientId)
+
+          if (isSameClient) {
+            try {
+              socket.close(1000, 'Replaced by new connection')
+            } catch {
+              // ignore
+            }
+          }
+        } catch {
+          // ignore
+        }
+      }
+
       const pair = new WebSocketPair()
       const client = pair[0]
       const server = pair[1]
 
-      const initialUserName = url.searchParams.get('userName') || undefined
+      const active = this.getActiveSockets()
+      const takenNames = active
+        .filter((a) => (role === 'host' ? a.role !== 'host' : a.clientId !== clientId))
+        .map((a) => a.userName)
+        .filter((n): n is string => Boolean(n))
+
+      const requestedName = url.searchParams.get('userName')
+      const assignedName = resolveUniqueParticipantName(requestedName, takenNames)
 
       this.ctx.acceptWebSocket(server)
-      server.serializeAttachment({ role, userName: initialUserName } satisfies SocketAttachment)
+      server.serializeAttachment({
+        role,
+        clientId,
+        userName: assignedName,
+      } satisfies SocketAttachment)
 
       this.resetAlarm()
 
       const snapshot = await this.getSnapshot()
-      server.send(JSON.stringify({ type: 'init', role, state: snapshot }))
+      server.send(JSON.stringify({ type: 'init', role, userName: assignedName, state: snapshot }))
 
       this.broadcastPresence()
 
@@ -276,10 +371,35 @@ export class RoomDO extends DurableObject {
       }
 
       if (data.type === 'set_presence') {
+        const targetName = sanitizeParticipantName(data.userName)
+        if (!targetName) {
+          ws.send(JSON.stringify({ type: 'error', message: 'Name cannot be empty' }))
+          return
+        }
+
+        const active = this.getActiveSockets()
+        const isTaken = active.some((a) => {
+          if (a.socket === ws) return false
+          if (role === 'host' && a.role === 'host') return false
+          if (attachment?.clientId && a.clientId === attachment.clientId) return false
+          return a.userName?.toLowerCase() === targetName.toLowerCase()
+        })
+
+        if (isTaken) {
+          ws.send(
+            JSON.stringify({
+              type: 'error',
+              message: `The name "${targetName}" is already taken in this room.`,
+            }),
+          )
+          return
+        }
+
         const attachment = ws.deserializeAttachment() as SocketAttachment | null
         const updated: SocketAttachment = {
           role: attachment?.role ?? 'viewer',
-          userName: data.userName.trim().slice(0, 24),
+          clientId: attachment?.clientId ?? '',
+          userName: targetName,
         }
         ws.serializeAttachment(updated)
         this.broadcastPresence()
@@ -296,7 +416,7 @@ export class RoomDO extends DurableObject {
     } catch {
       // ignore
     }
-    this.broadcastPresence()
+    this.broadcastPresence(ws)
   }
 
   async webSocketError(ws: WebSocket) {
@@ -305,7 +425,7 @@ export class RoomDO extends DurableObject {
     } catch {
       // ignore
     }
-    this.broadcastPresence()
+    this.broadcastPresence(ws)
   }
 
   async alarm() {

@@ -241,6 +241,7 @@ function ViewerApp({ slug }: { slug: string }) {
       setHeadcounts(update.headcounts)
     },
     onReaction: (r) => setReaction(r),
+    onAssignedName: (name) => setUserName(name),
   })
 
   useEffect(() => {
@@ -283,7 +284,11 @@ function ViewerApp({ slug }: { slug: string }) {
         </div>
         <div className="flex items-center gap-2">
           <PresenceBadge count={presenceCount} participants={participants} />
-          <ParticipantBadge name={userName} onChangeName={setUserName} />
+          <ParticipantBadge
+            name={userName}
+            participants={participants}
+            onChangeName={setUserName}
+          />
           <a
             href="/"
             className="rounded-lg px-3 py-1.5 text-sm font-medium text-ash transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -331,6 +336,7 @@ function ViewerApp({ slug }: { slug: string }) {
 
       <ParticipantModal
         name={userName}
+        participants={participants}
         isOpen={showPrompt}
         isInitialPrompt
         onClose={() => {
@@ -389,6 +395,7 @@ function HostApp({
     hostToken,
     userName,
     onReaction: (r) => setReaction(r),
+    onAssignedName: (name) => setUserName(name),
   })
 
   // Whenever session, categories, or headcounts change, broadcast to room if in one
@@ -425,7 +432,11 @@ function HostApp({
                 <span>Room: {slug}</span>
               </div>
               <PresenceBadge count={presenceCount} participants={participants} />
-              <ParticipantBadge name={userName} onChangeName={setUserName} />
+              <ParticipantBadge
+                name={userName}
+                participants={participants}
+                onChangeName={setUserName}
+              />
             </>
           )}
           <ShareButton
@@ -581,14 +592,14 @@ export default function AppRouter() {
   }, [])
 
   if (!slug) {
-    return <HostApp onSlugCreated={setSlug} />
+    return <HostApp key="solo" slug={null} onSlugCreated={setSlug} />
   }
 
   // Check if current user is the host of this room
   const isHost = Boolean(localStorage.getItem(`bbb.hostToken.${slug}`))
   if (isHost) {
-    return <HostApp slug={slug} onSlugCreated={setSlug} />
+    return <HostApp key={slug} slug={slug} onSlugCreated={setSlug} />
   }
 
-  return <ViewerApp slug={slug} />
+  return <ViewerApp key={slug} slug={slug} />
 }

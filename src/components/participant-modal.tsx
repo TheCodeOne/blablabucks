@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils'
 
 type ParticipantModalProps = {
   name: string
+  participants?: string[]
   isOpen: boolean
   onClose: () => void
   onSave: (newName: string) => void
@@ -19,6 +20,7 @@ type ParticipantModalProps = {
 
 export function ParticipantModal({
   name,
+  participants = [],
   isOpen,
   onClose,
   onSave,
@@ -26,13 +28,21 @@ export function ParticipantModal({
 }: ParticipantModalProps) {
   const [draft, setDraft] = useState(name)
 
+  const otherParticipants = participants.filter((p) => p.toLowerCase() !== name.toLowerCase())
+
+  const cleanDraft = sanitizeParticipantName(draft)
+  const isTaken = Boolean(
+    cleanDraft && otherParticipants.some((p) => p.toLowerCase() === cleanDraft.toLowerCase()),
+  )
+
   const handleRollPersona = () => {
-    setDraft(getRandomPersona())
+    setDraft(getRandomPersona(otherParticipants))
   }
 
   const handleSave = (e?: React.FormEvent) => {
     e?.preventDefault()
-    const clean = sanitizeParticipantName(draft) || name || getRandomPersona()
+    if (isTaken || !cleanDraft) return
+    const clean = cleanDraft || name || getRandomPersona(otherParticipants)
     setStoredParticipantName(clean)
     onSave(clean)
     onClose()
@@ -99,6 +109,12 @@ export function ParticipantModal({
                 </button>
               </div>
 
+              {isTaken && (
+                <p className="text-xs font-mono text-ember">
+                  This persona is already in use by another attendee in this room.
+                </p>
+              )}
+
               <div className="flex items-center justify-end gap-2 pt-2">
                 {isInitialPrompt && (
                   <button
@@ -111,7 +127,8 @@ export function ParticipantModal({
                 )}
                 <button
                   type="submit"
-                  className="flex items-center gap-1.5 rounded-lg bg-ember px-4 py-1.5 text-xs font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-ember/90"
+                  disabled={isTaken || !cleanDraft}
+                  className="flex items-center gap-1.5 rounded-lg bg-ember px-4 py-1.5 text-xs font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-ember/90 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <CheckIcon className="size-3.5" />
                   <span>{isInitialPrompt ? 'Join as this persona' : 'Save'}</span>
@@ -127,10 +144,12 @@ export function ParticipantModal({
 
 export function ParticipantBadge({
   name,
+  participants = [],
   onChangeName,
   className,
 }: {
   name: string
+  participants?: string[]
   onChangeName: (newName: string) => void
   className?: string
 }) {
@@ -154,6 +173,7 @@ export function ParticipantBadge({
 
       <ParticipantModal
         name={name}
+        participants={participants}
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
         onSave={onChangeName}

@@ -3,6 +3,7 @@ import {
   FUNNY_PERSONAS,
   getRandomPersona,
   MAX_PARTICIPANT_NAME_LENGTH,
+  resolveUniqueParticipantName,
   sanitizeParticipantName,
   getStoredParticipantName,
   setStoredParticipantName,
@@ -13,6 +14,34 @@ describe('participant domain', () => {
     it('returns a string from FUNNY_PERSONAS', () => {
       const persona = getRandomPersona()
       expect(FUNNY_PERSONAS).toContain(persona)
+    })
+
+    it('excludes specified names', () => {
+      const allExceptOne = FUNNY_PERSONAS.slice(1)
+      const persona = getRandomPersona(allExceptOne)
+      expect(persona).toBe(FUNNY_PERSONAS[0])
+    })
+
+    it('generates numbered fallback if all personas are taken', () => {
+      const persona = getRandomPersona(FUNNY_PERSONAS)
+      expect(persona).toBe(`${FUNNY_PERSONAS[0]} 2`)
+    })
+  })
+
+  describe('resolveUniqueParticipantName', () => {
+    it('returns requested name if not taken', () => {
+      expect(resolveUniqueParticipantName('Unique Name', ['Other Person'])).toBe('Unique Name')
+    })
+
+    it('assigns an available persona if requested name is already taken', () => {
+      const name = resolveUniqueParticipantName('Sleepy Stakeholder', ['Sleepy Stakeholder'])
+      expect(name).not.toBe('Sleepy Stakeholder')
+      expect(FUNNY_PERSONAS).toContain(name)
+    })
+
+    it('case-insensitively checks taken names', () => {
+      const name = resolveUniqueParticipantName('sleepy stakeholder', ['SLEEPY STAKEHOLDER'])
+      expect(name.toLowerCase()).not.toBe('sleepy stakeholder')
     })
   })
 

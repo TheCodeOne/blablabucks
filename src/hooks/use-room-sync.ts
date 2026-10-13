@@ -14,6 +14,21 @@ type UseRoomSyncOptions = {
     headcounts: Headcounts
   }) => void
   onReaction?: (reaction: { id: string; text: string; userName: string }) => void
+  onAssignedName?: (name: string) => void
+  onError?: (message: string) => void
+}
+
+function getSessionClientId(): string {
+  try {
+    let id = sessionStorage.getItem('bbb.clientId')
+    if (!id) {
+      id = crypto.randomUUID()
+      sessionStorage.setItem('bbb.clientId', id)
+    }
+    return id
+  } catch {
+    return 'client-' + Math.random().toString(36).slice(2)
+  }
 }
 
 export function useRoomSync({
@@ -22,6 +37,8 @@ export function useRoomSync({
   userName,
   onSessionUpdated,
   onReaction,
+  onAssignedName,
+  onError,
 }: UseRoomSyncOptions) {
   const [role, setRole] = useState<ClientRole | null>(null)
   const [connected, setConnected] = useState(false)
@@ -45,6 +62,16 @@ export function useRoomSync({
     onReactionRef.current = onReaction
   }, [onReaction])
 
+  const onAssignedNameRef = useRef(onAssignedName)
+  useEffect(() => {
+    onAssignedNameRef.current = onAssignedName
+  }, [onAssignedName])
+
+  const onErrorRef = useRef(onError)
+  useEffect(() => {
+    onErrorRef.current = onError
+  }, [onError])
+
   const userNameRef = useRef(userName)
   useEffect(() => {
     userNameRef.current = userName
@@ -63,8 +90,9 @@ export function useRoomSync({
       const nameQuery = userNameRef.current
         ? `userName=${encodeURIComponent(userNameRef.current)}`
         : ''
-      const queryString = [tokenQuery, nameQuery].filter(Boolean).join('&')
-      const wsUrl = `${protocol}//${window.location.host}/api/room/${slug}/websocket${queryString ? `?${queryString}` : ''}`
+      const clientQuery = `clientId=${encodeURIComponent(getSessionClientId())}`
+      const queryString = [tokenQuery, nameQuery, clientQuery].filter(Boolean).join('&')
+      const wsUrl = `${protocol}//${window.location.host}/api/room/${slug}/websocket?${queryString}`
 
       const ws = new WebSocket(wsUrl)
       wsRef.current = ws
@@ -84,6 +112,9 @@ export function useRoomSync({
             setInitialState(msg.state)
             setBuzzwords(msg.state.buzzwords || [])
             setBuzzwordsEnabled(msg.state.buzzwordsEnabled ?? true)
+            if (msg.userName) {
+              onAssignedNameRef.current?.(msg.userName)
+            }
           } else if (msg.type === 'session_updated') {
             onSessionUpdatedRef.current?.({
               session: msg.session,
@@ -100,6 +131,7 @@ export function useRoomSync({
             setPresenceCount(msg.count)
             setParticipants(msg.participants)
           } else if (msg.type === 'error') {
+            onErrorRef.current?.(msg.message)
             console.error('Room error:', msg.message)
           }
         } catch (e) {
@@ -146,8 +178,23 @@ export function useRoomSync({
     }
   }, [])
 
+  const initialConnectedRef = useRef(false)
+  const prevUserNameRef = useRef(userName)
+
   useEffect(() => {
-    if (connected && userName) {
+    if (!connected) {
+      initialConnectedRef.current = false
+      return
+    }
+
+    if (!initialConnectedRef.current) {
+      initialConnectedRef.current = true
+      prevUserNameRef.current = userName
+      return
+    }
+
+    if (userName && prevUserNameRef.current !== userName) {
+      prevUserNameRef.current = userName
       sendMessage({
         type: 'set_presence',
         userName,

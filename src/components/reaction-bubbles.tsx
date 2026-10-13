@@ -32,8 +32,8 @@ export function ReactionBubbles({ reaction }: ReactionBubblesProps) {
     const left = 12 + Math.random() * 70
     // Slight random drift between -35px and 35px
     const drift = (Math.random() - 0.5) * 70
-    // Duration between 3.2s and 4.0s
-    const duration = 3.2 + Math.random() * 0.8
+    // Duration between 7.5s and 9.5s for a calm, slow rise
+    const duration = 7.5 + Math.random() * 2.0
 
     setBubbles((prev) => [
       ...prev.slice(-30), // Cap max concurrent bubbles to prevent performance issues
@@ -63,17 +63,17 @@ export function ReactionBubbles({ reaction }: ReactionBubblesProps) {
               bottom: 0,
               left: `${bubble.left}%`,
             }}
-            initial={{ y: 40, opacity: 0, scale: 0.6 }}
+            initial={{ y: 50, opacity: 0, scale: 0.8 }}
             animate={{
-              y: typeof window !== 'undefined' ? -window.innerHeight - 80 : -900,
-              x: bubble.drift,
+              y: typeof window !== 'undefined' ? -window.innerHeight - 100 : -1000,
+              x: [0, bubble.drift * 0.6, bubble.drift],
               opacity: [0, 1, 1, 1, 0],
-              scale: [0.6, 1.05, 1, 0.95],
+              scale: [0.8, 1, 1, 0.95],
             }}
             transition={{
               duration: bubble.duration,
-              ease: [0.22, 1, 0.36, 1],
-              times: [0, 0.1, 0.7, 0.9, 1],
+              ease: 'linear',
+              times: [0, 0.08, 0.8, 0.95, 1],
             }}
             onAnimationComplete={() => handleComplete(bubble.key)}
             className="flex items-center gap-2 rounded-full border border-ember/30 bg-card/90 px-3.5 py-1.5 shadow-lg backdrop-blur-md"

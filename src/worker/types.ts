@@ -46,6 +46,7 @@ export type ServerMessage =
   | {
       type: 'init'
       role: ClientRole
+      userName?: string
       state: RoomStateSnapshot
     }
   | {
@@ -80,5 +81,6 @@ export type ServerMessage =
 
 export type SocketAttachment = {
   role: ClientRole
+  clientId: string
   userName?: string
 }
